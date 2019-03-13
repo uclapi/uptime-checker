@@ -20,10 +20,8 @@ def update_cachet_endpoint(url,id,expiry_time,extra_params=None):
     minutes = int((now - date).total_seconds() / 60)
     if minutes > expiry_time:
         status = 4
-    else:
-        status = 1
-    url = "https://cachet.apps.uclapi.com/api/v1/components/"
-    requests.request("PUT",url+str(id),data={"status":status},headers=payload_headers)
+        url = "https://cachet.apps.uclapi.com/api/v1/components/"
+        requests.request("PUT",url+str(id),data={"status":status},headers=payload_headers)
 
 def update_cachet_url_ping(url,id):
     r = requests.get(url)
@@ -35,11 +33,12 @@ def update_cachet_url_ping(url,id):
     requests.request("PUT",url+str(id),data={"status":status},headers=payload_headers)
 
 def my_handler(event, context):
+    token = event['uclapi_token']
+    payload_headers["X-Cachet-Token"] = event['cachet_token']
     url = "https://uclapi.com/"
     params = {
       "contact": "Mark"
     }
-    update_cachet_endpoint(url+"roombookings/bookings",1,45,extra_params=params)
     update_cachet_endpoint(url+"workspaces/surveys",3,15)
     update_cachet_endpoint(url+"timetable/data/departments",2,45)
     update_cachet_url_ping(url,4)
