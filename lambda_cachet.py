@@ -8,6 +8,7 @@ token = "uclapi-PUT_TOKEN_HERE"
 payload_headers = {"X-Cachet-Token":"TOKEN_HERE", "Content-Type": "application/x-www-form-urlencoded"}
 # Get current time
 now = datetime.datetime.now(tzoffset('GMT', 0))
+time_total = []
 
 def update_cachet_endpoint(url,id,expiry_time,extra_params=None):
     params = {"token":token}
@@ -18,6 +19,7 @@ def update_cachet_endpoint(url,id,expiry_time,extra_params=None):
     date = datetime.datetime.strptime(stamp, '%a, %d %b %Y %X %Z')
     date = date.replace(tzinfo=tzoffset('GMT',0))
     minutes = int((now - date).total_seconds() / 60)
+    time_total.append(r.elapsed.total_seconds()*1000)
     if minutes > expiry_time:
         status = 4
         url = "https://cachet.apps.uclapi.com/api/v1/components/"
@@ -32,13 +34,21 @@ def update_cachet_url_ping(url,id):
     url = "https://cachet.apps.uclapi.com/api/v1/components/"
     requests.request("PUT",url+str(id),data={"status":status},headers=payload_headers)
 
+def update_cachet_metric(value,id):
+    url = "https://cachet.apps.uclapi.com/api/v1/metrics/"+str(id)+"/points/"
+    requests.request("POST",url,data={"value":value},headers=payload_headers)
+
 def my_handler(event, context):
-    token = event['uclapi_token']
-    payload_headers["X-Cachet-Token"] = event['cachet_token']
+    #token = event['uclapi_token']
+    #payload_headers["X-Cachet-Token"] = event['cachet_token']
     url = "https://uclapi.com/"
-    params = {
-      "contact": "Mark"
-    }
     update_cachet_endpoint(url+"workspaces/surveys",3,15)
     update_cachet_endpoint(url+"timetable/data/departments",2,45)
     update_cachet_url_ping(url,4)
+    sum = 0
+    count = 0
+    for time in time_total:
+        sum += time
+        count += 1
+    average_request_time = sum/count
+    update_cachet_metric(average_request_time,1)
